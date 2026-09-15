@@ -1,0 +1,600 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>TrialMatch AI — Risk-Aware Clinical Trial Matching</title>
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,600;0,700;1,400;1,600&family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
+  <style>
+    :root {
+      --gold: #cda45e;
+      --gold-light: #e8c97a;
+      --gold-dark: #a8843a;
+      --dark: #0d0d0d;
+      --dark-2: #151515;
+      --dark-3: #1e1e1e;
+      --dark-4: #252525;
+      --dark-5: #2e2e2e;
+      --text-light: #bdbdbd;
+      --text-muted: #757575;
+      --white: #ffffff;
+      --risk-low: #4caf50;
+      --risk-med: #ff9800;
+      --risk-high: #f44336;
+      --accent-blue: #4a90d9;
+    }
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: 'Poppins', sans-serif; background: var(--dark); color: var(--white); min-height: 100vh; }
+
+    /* Topbar */
+    .topbar { background: var(--dark-2); border-bottom: 1px solid #2a2a2a; padding: 8px 0; font-size: 13px; color: var(--text-muted); }
+    .topbar a { color: var(--gold); text-decoration: none; }
+    .badge-ai { background: var(--gold); color: var(--dark); font-size: 10px; font-weight: 700; padding: 2px 8px; border-radius: 20px; letter-spacing: 1px; text-transform: uppercase; }
+
+    /* Header */
+    .header { background: rgba(13,13,13,0.97); backdrop-filter: blur(10px); border-bottom: 1px solid #222; position: sticky; top: 0; z-index: 1000; padding: 16px 0; }
+    .sitename { font-family: 'Playfair Display', serif; font-size: 26px; font-weight: 700; color: var(--white); letter-spacing: 1px; }
+    .sitename span { color: var(--gold); }
+    .nav-link-custom { color: var(--text-light); text-decoration: none; font-size: 14px; font-weight: 500; margin: 0 14px; transition: color 0.2s; letter-spacing: 0.5px; }
+    .nav-link-custom:hover, .nav-link-custom.active { color: var(--gold); }
+    .btn-match { background: var(--gold); color: var(--dark); border: none; padding: 8px 22px; border-radius: 2px; font-size: 13px; font-weight: 600; letter-spacing: 1px; text-transform: uppercase; cursor: pointer; transition: all 0.2s; }
+    .btn-match:hover { background: var(--gold-light); }
+
+    /* Hero */
+    .hero { background: linear-gradient(135deg, #0d0d0d 0%, #1a1208 50%, #0d0d0d 100%); padding: 100px 0 80px; position: relative; overflow: hidden; }
+    .hero::before { content: ''; position: absolute; top: -50%; right: -20%; width: 600px; height: 600px; background: radial-gradient(circle, rgba(205,164,94,0.08) 0%, transparent 70%); pointer-events: none; }
+    .hero-tag { display: inline-block; background: rgba(205,164,94,0.12); border: 1px solid rgba(205,164,94,0.3); color: var(--gold); font-size: 11px; font-weight: 600; letter-spacing: 3px; text-transform: uppercase; padding: 6px 16px; border-radius: 2px; margin-bottom: 24px; }
+    .hero h1 { font-family: 'Playfair Display', serif; font-size: clamp(36px, 5vw, 58px); font-weight: 700; line-height: 1.15; margin-bottom: 20px; }
+    .hero h1 span { color: var(--gold); }
+    .hero p { color: var(--text-light); font-size: 16px; line-height: 1.8; max-width: 520px; margin-bottom: 36px; }
+
+    /* Stats */
+    .stat-card { background: var(--dark-3); border: 1px solid #2a2a2a; border-left: 3px solid var(--gold); padding: 20px 24px; border-radius: 2px; }
+    .stat-number { font-family: 'Playfair Display', serif; font-size: 32px; font-weight: 700; color: var(--gold); line-height: 1; }
+    .stat-label { font-size: 12px; color: var(--text-muted); margin-top: 4px; letter-spacing: 0.5px; }
+
+    /* Search */
+    .search-section { background: var(--dark-2); padding: 70px 0; border-top: 1px solid #1e1e1e; border-bottom: 1px solid #1e1e1e; }
+    .section-label { font-size: 12px; color: var(--gold); letter-spacing: 3px; text-transform: uppercase; font-weight: 600; margin-bottom: 12px; }
+    .section-title { font-family: 'Playfair Display', serif; font-size: 36px; font-weight: 700; margin-bottom: 8px; }
+    .section-subtitle { color: var(--text-muted); font-size: 14px; margin-bottom: 40px; }
+    .search-card { background: var(--dark-3); border: 1px solid #2a2a2a; border-radius: 4px; padding: 36px; }
+    .form-label-custom { font-size: 13px; font-weight: 500; color: var(--text-light); margin-bottom: 8px; letter-spacing: 0.5px; display: block; }
+    .form-control-custom { background: var(--dark-4); border: 1px solid #333; color: var(--white); border-radius: 2px; padding: 10px 14px; font-size: 14px; font-family: 'Poppins', sans-serif; transition: border-color 0.2s; width: 100%; }
+    .form-control-custom:focus { outline: none; border-color: var(--gold); }
+    .form-control-custom::placeholder { color: #555; }
+    textarea.form-control-custom { resize: vertical; min-height: 120px; }
+    select.form-control-custom option { background: var(--dark-4); }
+    .btn-search { background: var(--gold); color: var(--dark); border: none; padding: 14px 40px; font-size: 14px; font-weight: 700; letter-spacing: 1.5px; text-transform: uppercase; border-radius: 2px; cursor: pointer; transition: all 0.2s; width: 100%; margin-top: 8px; }
+    .btn-search:hover { background: var(--gold-light); transform: translateY(-1px); }
+    .btn-search:disabled { opacity: 0.6; cursor: not-allowed; transform: none; }
+    .pipeline-badge { display: inline-flex; align-items: center; gap: 6px; background: rgba(205,164,94,0.1); border: 1px solid rgba(205,164,94,0.2); color: var(--gold); font-size: 11px; font-weight: 600; padding: 4px 12px; border-radius: 20px; margin: 4px 4px 4px 0; }
+
+    /* Loading */
+    .loading-overlay { display: none; text-align: center; padding: 40px; }
+    .spinner-gold { width: 48px; height: 48px; border: 3px solid #2a2a2a; border-top-color: var(--gold); border-radius: 50%; animation: spin 0.8s linear infinite; margin: 0 auto 16px; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .loading-text { color: var(--text-muted); font-size: 13px; }
+    .stage-item { display: flex; align-items: center; gap: 10px; font-size: 12px; color: var(--text-muted); margin: 6px auto; opacity: 0.4; transition: opacity 0.3s; max-width: 340px; text-align: left; }
+    .stage-item.active { opacity: 1; color: var(--gold); }
+    .stage-item.done { opacity: 0.7; color: var(--risk-low); }
+    .stage-dot { width: 8px; height: 8px; border-radius: 50%; background: currentColor; flex-shrink: 0; }
+
+    /* Results */
+    .results-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 32px; flex-wrap: wrap; gap: 12px; }
+    .results-count { font-family: 'Playfair Display', serif; font-size: 28px; }
+    .results-count span { color: var(--gold); }
+    .sort-btn { background: var(--dark-3); border: 1px solid #333; color: var(--text-light); font-size: 12px; padding: 6px 14px; border-radius: 2px; cursor: pointer; transition: all 0.2s; }
+    .sort-btn.active, .sort-btn:hover { border-color: var(--gold); color: var(--gold); }
+
+    /* Result Card */
+    .result-card { background: var(--dark-3); border: 1px solid #2a2a2a; border-radius: 4px; padding: 28px 32px; margin-bottom: 16px; transition: all 0.25s; position: relative; overflow: hidden; animation: fadeInUp 0.4s ease both; }
+    .result-card:nth-child(1){animation-delay:.05s} .result-card:nth-child(2){animation-delay:.1s} .result-card:nth-child(3){animation-delay:.15s} .result-card:nth-child(4){animation-delay:.2s} .result-card:nth-child(5){animation-delay:.25s}
+    .result-card::before { content: ''; position: absolute; left: 0; top: 0; bottom: 0; width: 3px; background: var(--gold); transition: width 0.2s; }
+    .result-card:hover { border-color: #3a3a3a; transform: translateY(-2px); box-shadow: 0 8px 32px rgba(0,0,0,0.4); }
+    .result-card:hover::before { width: 5px; }
+    @keyframes fadeInUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+
+    .rank-badge { display: inline-flex; align-items: center; justify-content: center; width: 32px; height: 32px; background: var(--gold); color: var(--dark); font-weight: 700; font-size: 14px; border-radius: 2px; flex-shrink: 0; }
+    .rank-badge.mid { background: var(--dark-5); color: var(--text-light); border: 1px solid #444; }
+    .trial-id { font-size: 11px; color: var(--gold); font-weight: 600; letter-spacing: 1px; margin-bottom: 4px; }
+    .trial-title { font-family: 'Playfair Display', serif; font-size: 17px; font-weight: 600; color: var(--white); line-height: 1.4; margin-bottom: 16px; }
+
+    /* Score bars */
+    .score-row { display: flex; gap: 20px; flex-wrap: wrap; margin-bottom: 16px; }
+    .score-item { flex: 1; min-width: 120px; }
+    .score-label { font-size: 10px; color: var(--text-muted); letter-spacing: 1px; text-transform: uppercase; margin-bottom: 6px; }
+    .score-bar-track { height: 4px; background: #2a2a2a; border-radius: 2px; overflow: hidden; margin-bottom: 4px; }
+    .score-bar-fill { height: 100%; border-radius: 2px; transition: width 0.8s ease; }
+    .score-value { font-size: 13px; font-weight: 600; color: var(--white); }
+    .bar-relevance { background: var(--accent-blue); }
+    .bar-risk-low { background: var(--risk-low); }
+    .bar-risk-med { background: var(--risk-med); }
+    .bar-risk-high { background: var(--risk-high); }
+    .bar-final { background: var(--gold); }
+
+    .risk-pill { display: inline-flex; align-items: center; gap: 5px; font-size: 11px; font-weight: 600; padding: 3px 10px; border-radius: 20px; letter-spacing: 0.5px; }
+    .risk-low { background: rgba(76,175,80,0.15); color: var(--risk-low); border: 1px solid rgba(76,175,80,0.3); }
+    .risk-med { background: rgba(255,152,0,0.15); color: var(--risk-med); border: 1px solid rgba(255,152,0,0.3); }
+    .risk-high { background: rgba(244,67,54,0.15); color: var(--risk-high); border: 1px solid rgba(244,67,54,0.3); }
+
+    /* SHAP */
+    .shap-section { margin-top: 16px; border-top: 1px solid #2a2a2a; padding-top: 16px; }
+    .shap-title { font-size: 11px; color: var(--text-muted); letter-spacing: 1px; text-transform: uppercase; margin-bottom: 10px; }
+    .shap-feature { display: flex; align-items: center; gap: 10px; margin-bottom: 8px; font-size: 12px; }
+    .shap-name { color: var(--text-light); min-width: 160px; }
+    .shap-bar-track { flex: 1; height: 6px; background: #2a2a2a; border-radius: 3px; overflow: hidden; }
+    .shap-bar-pos { height: 100%; background: var(--risk-high); border-radius: 3px; }
+    .shap-bar-neg { height: 100%; background: var(--accent-blue); border-radius: 3px; }
+    .shap-val { color: var(--text-muted); min-width: 50px; text-align: right; }
+    .expand-btn { background: none; border: 1px solid #333; color: var(--text-muted); font-size: 11px; padding: 4px 12px; border-radius: 2px; cursor: pointer; transition: all 0.2s; margin-top: 12px; }
+    .expand-btn:hover { border-color: var(--gold); color: var(--gold); }
+
+    /* Pipeline section */
+    .pipeline-section { background: var(--dark-2); padding: 70px 0; border-top: 1px solid #1e1e1e; }
+    .pipeline-step { background: var(--dark-3); border: 1px solid #2a2a2a; border-radius: 4px; padding: 28px; height: 100%; transition: border-color 0.2s; }
+    .pipeline-step:hover { border-color: rgba(205,164,94,0.3); }
+    .step-number { font-family: 'Playfair Display', serif; font-size: 48px; font-weight: 700; color: rgba(205,164,94,0.2); line-height: 1; margin-bottom: 12px; }
+    .step-title { font-size: 16px; font-weight: 600; color: var(--white); margin-bottom: 8px; }
+    .step-model { font-size: 11px; color: var(--gold); font-weight: 600; letter-spacing: 1px; margin-bottom: 10px; }
+    .step-desc { font-size: 13px; color: var(--text-muted); line-height: 1.7; }
+
+    /* Formula */
+    .formula-section { background: var(--dark); padding: 60px 0; border-top: 1px solid #1e1e1e; text-align: center; }
+    .formula-box { display: inline-block; background: var(--dark-3); border: 1px solid rgba(205,164,94,0.3); padding: 28px 48px; border-radius: 4px; margin-top: 24px; }
+    .formula-text { font-family: 'Playfair Display', serif; font-size: clamp(18px,3vw,28px); color: var(--white); }
+    .f-rel { color: var(--accent-blue); } .f-risk { color: var(--risk-high); } .f-final { color: var(--gold); }
+
+    /* Error */
+    .error-box { background: rgba(244,67,54,0.1); border: 1px solid rgba(244,67,54,0.3); color: #ef9a9a; padding: 16px 20px; border-radius: 4px; font-size: 13px; display: none; margin-top: 16px; }
+
+    /* Footer */
+    .footer { background: var(--dark-2); border-top: 1px solid #1e1e1e; padding: 50px 0 24px; }
+    .footer-title { font-family: 'Playfair Display', serif; font-size: 20px; color: var(--white); margin-bottom: 16px; }
+    .footer p, .footer li { font-size: 13px; color: var(--text-muted); line-height: 1.8; }
+    .footer-divider { border-color: #2a2a2a; margin: 24px 0; }
+    .footer-copy { font-size: 12px; color: #555; text-align: center; }
+    .footer-copy span { color: var(--gold); }
+    ::-webkit-scrollbar { width: 6px; } ::-webkit-scrollbar-track { background: var(--dark-2); } ::-webkit-scrollbar-thumb { background: #333; border-radius: 3px; }
+  </style>
+</head>
+<body>
+
+<!-- Topbar -->
+<div class="topbar">
+  <div class="container d-flex justify-content-between align-items-center">
+    <div class="d-flex align-items-center gap-3">
+      <span class="badge-ai">AI Powered</span>
+      <span>Master's Thesis · Biomedical AI / Clinical NLP</span>
+    </div>
+    <div class="d-none d-md-flex align-items-center gap-3" style="font-size:12px;">
+      <span><i class="bi bi-cpu me-1"></i>PubMedBERT + XGBoost</span>
+      <span><i class="bi bi-database me-1"></i>11,601 Trials Indexed</span>
+    </div>
+  </div>
+</div>
+
+<!-- Header -->
+<header class="header">
+  <div class="container d-flex align-items-center justify-content-between">
+    <div class="sitename">Trial<span>Match</span> <small style="font-size:13px;color:#555;font-family:Poppins;font-weight:300;">AI</small></div>
+    <nav class="d-none d-lg-flex align-items-center">
+      <a href="#search" class="nav-link-custom active">Search</a>
+      <a href="#pipeline" class="nav-link-custom">Pipeline</a>
+      <a href="#formula" class="nav-link-custom">Formula</a>
+      <a href="#about" class="nav-link-custom">About</a>
+    </nav>
+    <button class="btn-match" onclick="document.getElementById('search').scrollIntoView({behavior:'smooth'})">Find Trials</button>
+  </div>
+</header>
+
+<!-- Hero -->
+<section class="hero" id="home">
+  <div class="container">
+    <div class="row align-items-center gy-5">
+      <div class="col-lg-7">
+        <div class="hero-tag"><i class="bi bi-activity me-2"></i>Risk-Aware Matching</div>
+        <h1>Find Clinical Trials<br>That <span>Actually Succeed</span></h1>
+        <p>A 3-stage AI pipeline that retrieves semantically relevant clinical trials, reranks by precision, and penalises by predicted failure risk — so patients see the best trials first.</p>
+        <div class="d-flex gap-3 flex-wrap">
+          <button class="btn-match" onclick="document.getElementById('search').scrollIntoView({behavior:'smooth'})">
+            <i class="bi bi-search me-2"></i>Match a Patient
+          </button>
+          <button style="background:transparent;border:1px solid var(--gold);color:var(--gold);padding:8px 22px;border-radius:2px;font-size:13px;font-weight:600;letter-spacing:1px;text-transform:uppercase;cursor:pointer;" onclick="document.getElementById('pipeline').scrollIntoView({behavior:'smooth'})">
+            <i class="bi bi-diagram-3 me-2"></i>How It Works
+          </button>
+        </div>
+      </div>
+      <div class="col-lg-5">
+        <div class="row gy-3">
+          <div class="col-6"><div class="stat-card"><div class="stat-number">0.88</div><div class="stat-label">CV ROC-AUC Score</div></div></div>
+          <div class="col-6"><div class="stat-card"><div class="stat-number">11,601</div><div class="stat-label">Trials Indexed</div></div></div>
+          <div class="col-6"><div class="stat-card"><div class="stat-number">3</div><div class="stat-label">Pipeline Stages</div></div></div>
+          <div class="col-6"><div class="stat-card"><div class="stat-number">80%</div><div class="stat-label">Test Accuracy</div></div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Search Section -->
+<section class="search-section" id="search">
+  <div class="container">
+    <div class="row gy-5">
+      <div class="col-lg-5">
+        <div class="section-label">Patient Query</div>
+        <h2 class="section-title">Find Matching Trials</h2>
+        <p class="section-subtitle">Enter patient details to retrieve, rerank, and risk-score the best clinical trials.</p>
+        <div class="mb-4">
+          <div class="pipeline-badge"><i class="bi bi-1-circle"></i> Stage 1: PubMedBERT Retrieval</div>
+          <div class="pipeline-badge"><i class="bi bi-2-circle"></i> Stage 2: Cross-Encoder Rerank</div>
+          <div class="pipeline-badge"><i class="bi bi-3-circle"></i> Stage 3: XGBoost Risk Score</div>
+        </div>
+        <div class="search-card">
+          <div class="mb-3">
+            <label class="form-label-custom">Patient ID</label>
+            <input type="text" id="patientId" class="form-control-custom" placeholder="e.g. P001" value="P001">
+          </div>
+          <div class="row mb-3">
+            <div class="col-6">
+              <label class="form-label-custom">Age</label>
+              <input type="number" id="patientAge" class="form-control-custom" placeholder="55" value="55">
+            </div>
+            <div class="col-6">
+              <label class="form-label-custom">Sex</label>
+              <select id="patientSex" class="form-control-custom">
+                <option value="F">Female</option>
+                <option value="M">Male</option>
+              </select>
+            </div>
+          </div>
+          <div class="mb-3">
+            <label class="form-label-custom">Diagnosis Codes (comma-separated)</label>
+            <input type="text" id="diagCodes" class="form-control-custom" placeholder="e.g. C34.1" value="C34.1">
+          </div>
+          <div class="mb-3">
+            <label class="form-label-custom">Current Medications (comma-separated)</label>
+            <input type="text" id="medications" class="form-control-custom" placeholder="e.g. cisplatin, pemetrexed" value="cisplatin, pemetrexed">
+          </div>
+          <div class="mb-3">
+            <label class="form-label-custom">Clinical Summary <span style="color:var(--gold)">*</span></label>
+            <textarea id="summary" class="form-control-custom">Adult female patient with stage IV non-small cell lung cancer seeking first-line chemotherapy clinical trial</textarea>
+          </div>
+          <button class="btn-search" id="searchBtn" onclick="runSearch()">
+            <i class="bi bi-search me-2"></i>Find Matching Trials
+          </button>
+          <div class="error-box" id="errorBox">
+            <i class="bi bi-exclamation-triangle me-2"></i><span id="errorMsg"></span>
+          </div>
+        </div>
+      </div>
+
+      <div class="col-lg-7">
+        <!-- Loading -->
+        <div class="loading-overlay" id="loadingOverlay">
+          <div class="spinner-gold"></div>
+          <div class="loading-text">Processing through the 3-stage pipeline...</div>
+          <div class="mt-4">
+            <div class="stage-item" id="stage1"><div class="stage-dot"></div>Stage 1 — PubMedBERT encoding & FAISS retrieval (top 100)</div>
+            <div class="stage-item" id="stage2"><div class="stage-dot"></div>Stage 2 — Cross-encoder reranking (top 20)</div>
+            <div class="stage-item" id="stage3"><div class="stage-dot"></div>Stage 3 — XGBoost risk scoring & SHAP</div>
+            <div class="stage-item" id="stage4"><div class="stage-dot"></div>Computing final scores & ranking</div>
+          </div>
+        </div>
+
+        <!-- Empty state -->
+        <div id="emptyState" style="text-align:center;padding:80px 40px;color:var(--text-muted);">
+          <i class="bi bi-activity" style="font-size:64px;color:#2a2a2a;display:block;margin-bottom:20px;"></i>
+          <div style="font-size:16px;color:#444;margin-bottom:8px;">Ready to search</div>
+          <div style="font-size:13px;">Fill in patient details and click Find Matching Trials</div>
+        </div>
+
+        <!-- Results -->
+        <div id="resultsContainer" style="display:none;">
+          <div class="results-header">
+            <div>
+              <div class="results-count">Top <span id="resultCount">0</span> Matched Trials</div>
+              <div style="font-size:12px;color:var(--text-muted);margin-top:4px;" id="queryEcho"></div>
+            </div>
+            <div class="d-flex gap-2 align-items-center flex-wrap">
+              <span style="font-size:11px;color:var(--text-muted);">Sort:</span>
+              <button class="sort-btn active" onclick="sortResults('final_score',this)">Final Score</button>
+              <button class="sort-btn" onclick="sortResults('relevance_score',this)">Relevance</button>
+              <button class="sort-btn" onclick="sortResults('sae_risk',this)">Risk ↑</button>
+            </div>
+          </div>
+          <div id="resultsList"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Pipeline -->
+<section class="pipeline-section" id="pipeline">
+  <div class="container">
+    <div class="text-center mb-5">
+      <div class="section-label">Architecture</div>
+      <h2 class="section-title">3-Stage Pipeline</h2>
+      <p style="color:var(--text-muted);font-size:14px;max-width:540px;margin:0 auto;">Each stage filters and scores candidates — from 11,601 trials down to the top 20 risk-adjusted matches.</p>
+    </div>
+    <div class="row gy-4">
+      <div class="col-lg-4">
+        <div class="pipeline-step">
+          <div class="step-number">01</div>
+          <div class="step-title">Dense Retrieval</div>
+          <div class="step-model">PubMedBERT + FAISS IVFFlat</div>
+          <div class="step-desc">Patient summary encoded into 768-dim biomedical embedding. FAISS approximate nearest neighbour search over all indexed trial criteria returns top 100 candidates.</div>
+          <div style="margin-top:16px;"><span class="pipeline-badge">11,601 → 100</span></div>
+        </div>
+      </div>
+      <div class="col-lg-4">
+        <div class="pipeline-step">
+          <div class="step-number">02</div>
+          <div class="step-title">Cross-Encoder Reranking</div>
+          <div class="step-model">MiniLM-L12-v2</div>
+          <div class="step-desc">Each candidate is scored jointly with the patient query — capturing nuanced eligibility criteria alignment beyond simple embedding similarity. Top 20 retained.</div>
+          <div style="margin-top:16px;"><span class="pipeline-badge">100 → 20</span></div>
+        </div>
+      </div>
+      <div class="col-lg-4">
+        <div class="pipeline-step">
+          <div class="step-number">03</div>
+          <div class="step-title">Risk Scoring</div>
+          <div class="step-model">XGBoost · ROC-AUC 0.83</div>
+          <div class="step-desc">XGBoost classifier trained on HINT benchmark predicts trial failure probability using 8 structured features. SHAP values explain each prediction. Final score penalises high-risk trials.</div>
+          <div style="margin-top:16px;"><span class="pipeline-badge">20 → Ranked</span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Formula -->
+<section class="formula-section" id="formula">
+  <div class="container">
+    <div class="section-label">Ranking Formula</div>
+    <h2 class="section-title">How Scores Are Computed</h2>
+    <p style="color:var(--text-muted);font-size:14px;max-width:500px;margin:0 auto 8px;">A highly relevant but high-risk trial scores lower than a moderately relevant but low-risk one.</p>
+    <div class="formula-box">
+      <div class="formula-text">
+        <span class="f-final">FinalScore</span> = <span class="f-rel">NormRelevance</span> × (1 − <span class="f-risk">FailureRisk</span>)
+      </div>
+      <div style="margin-top:16px;display:flex;gap:24px;justify-content:center;flex-wrap:wrap;font-size:12px;color:var(--text-muted);">
+        <span><span class="f-rel" style="font-weight:600;">NormRelevance</span> — cross-encoder score normalised to [0,1]</span>
+        <span><span class="f-risk" style="font-weight:600;">FailureRisk</span> — XGBoost predicted failure probability</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- About -->
+<section class="pipeline-section" id="about" style="padding:60px 0;">
+  <div class="container">
+    <div class="row align-items-center gy-4">
+      <div class="col-lg-6">
+        <div class="section-label">About This Project</div>
+        <h2 class="section-title">Master's Thesis</h2>
+        <p style="color:var(--text-muted);font-size:14px;line-height:1.9;margin-bottom:20px;">Built as a Master's thesis in Biomedical AI / Clinical NLP. The core contribution is integrating trial outcome risk scoring into semantic retrieval — a problem current systems ignore.</p>
+        <div class="row gy-3">
+          <div class="col-6"><div style="font-size:12px;color:var(--text-muted);margin-bottom:4px;">Authors</div><div style="font-size:14px;font-weight:500;">Deekshitha R · Twinkle Sahu</div></div>
+          <div class="col-6"><div style="font-size:12px;color:var(--text-muted);margin-bottom:4px;">Roll Number</div><div style="font-size:14px;font-weight:500;">se25mbds002</div></div>
+          <div class="col-6"><div style="font-size:12px;color:var(--text-muted);margin-bottom:4px;">Data Source</div><div style="font-size:14px;font-weight:500;">HINT Benchmark (PyTrial)</div></div>
+          <div class="col-6"><div style="font-size:12px;color:var(--text-muted);margin-bottom:4px;">Infrastructure</div><div style="font-size:14px;font-weight:500;">DGX A100 · Colab T4</div></div>
+        </div>
+      </div>
+      <div class="col-lg-6">
+        <div class="row gy-3">
+          <div class="col-12">
+            <div class="pipeline-step">
+              <div style="font-size:12px;color:var(--gold);font-weight:600;margin-bottom:8px;">KEY RESULT</div>
+              <div style="font-family:'Playfair Display',serif;font-size:22px;margin-bottom:4px;">ROC-AUC: 0.8312</div>
+              <div style="font-size:12px;color:var(--text-muted);">XGBoost on held-out test set · CV: 0.8859 ± 0.0077</div>
+            </div>
+          </div>
+          <div class="col-12">
+            <div class="pipeline-step">
+              <div style="font-size:12px;color:var(--gold);font-weight:600;margin-bottom:8px;">TOP SHAP FEATURES</div>
+              <div style="font-size:13px;color:var(--text-light);line-height:2;">
+                <span style="color:var(--risk-high);">●</span> is_terminated (1.42) &nbsp;
+                <span style="color:var(--risk-med);">●</span> study_year (1.10) &nbsp;
+                <span style="color:var(--accent-blue);">●</span> disease_enc (1.04)
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Footer -->
+<footer class="footer">
+  <div class="container">
+    <div class="row gy-4">
+      <div class="col-lg-4">
+        <div class="footer-title">Trial<span style="color:var(--gold)">Match</span> AI</div>
+        <p>Risk-aware clinical trial matching system combining semantic retrieval with trial outcome prediction. Master's Thesis · Biomedical AI.</p>
+      </div>
+      <div class="col-lg-4">
+        <div class="footer-title" style="font-size:16px;">Pipeline</div>
+        <ul style="list-style:none;padding:0;">
+          <li>Stage 1 — PubMedBERT Bi-Encoder</li>
+          <li>Stage 2 — MiniLM Cross-Encoder</li>
+          <li>Stage 3 — XGBoost Risk Classifier</li>
+          <li>Final — Risk-Adjusted Ranking</li>
+        </ul>
+      </div>
+      <div class="col-lg-4">
+        <div class="footer-title" style="font-size:16px;">Technologies</div>
+        <ul style="list-style:none;padding:0;">
+          <li>sentence-transformers · faiss · xgboost</li>
+          <li>FastAPI · uvicorn · shap</li>
+          <li>HINT Benchmark (PyTrial)</li>
+          <li>NVIDIA DGX A100 · Google Colab T4</li>
+        </ul>
+      </div>
+    </div>
+    <hr class="footer-divider">
+    <div class="footer-copy">© 2025 <span>TrialMatch AI</span> · Deekshitha R · Twinkle Sahu · se25mbds002</div>
+  </div>
+</footer>
+
+<script>
+  // ── Change this to your HPC IP ──
+  const API_URL = 'http://10.59.121.172:8000';
+  let currentResults = [];
+
+  async function runSearch() {
+    const summary = document.getElementById('summary').value.trim();
+    if (!summary) { alert('Please enter a clinical summary.'); return; }
+
+    const btn = document.getElementById('searchBtn');
+    btn.disabled = true;
+    btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Processing...';
+    document.getElementById('emptyState').style.display = 'none';
+    document.getElementById('resultsContainer').style.display = 'none';
+    document.getElementById('loadingOverlay').style.display = 'block';
+    document.getElementById('errorBox').style.display = 'none';
+
+    const stages = ['stage1','stage2','stage3','stage4'];
+    const delays = [0, 2500, 6000, 9000];
+    stages.forEach((id, i) => {
+      setTimeout(() => {
+        if (i > 0) document.getElementById(stages[i-1]).className = 'stage-item done';
+        document.getElementById(id).className = 'stage-item active';
+      }, delays[i]);
+    });
+
+    const payload = {
+      patient_id: document.getElementById('patientId').value || 'P001',
+      age: parseInt(document.getElementById('patientAge').value) || 55,
+      sex: document.getElementById('patientSex').value,
+      diagnosis_codes: document.getElementById('diagCodes').value.split(',').map(s=>s.trim()).filter(Boolean),
+      medications: document.getElementById('medications').value.split(',').map(s=>s.trim()).filter(Boolean),
+      free_text_summary: summary
+    };
+
+    try {
+      const res = await fetch(`${API_URL}/match`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      });
+      if (!res.ok) throw new Error(`Server error: ${res.status}`);
+      const data = await res.json();
+      currentResults = data;
+      stages.forEach(id => document.getElementById(id).className = 'stage-item done');
+      setTimeout(() => {
+        document.getElementById('loadingOverlay').style.display = 'none';
+        renderResults(data, summary);
+      }, 400);
+    } catch (err) {
+      document.getElementById('loadingOverlay').style.display = 'none';
+      document.getElementById('emptyState').style.display = 'block';
+      document.getElementById('errorBox').style.display = 'block';
+      document.getElementById('errorMsg').textContent = `Error: ${err.message}. Make sure the API is running at ${API_URL}`;
+    } finally {
+      btn.disabled = false;
+      btn.innerHTML = '<i class="bi bi-search me-2"></i>Find Matching Trials';
+      stages.forEach(id => document.getElementById(id).className = 'stage-item');
+    }
+  }
+
+  function getRiskClass(r) { return r < 0.4 ? 'risk-low' : r < 0.7 ? 'risk-med' : 'risk-high'; }
+  function getRiskLabel(r) { return r < 0.4 ? 'Low Risk' : r < 0.7 ? 'Moderate Risk' : 'High Risk'; }
+  function getRiskIcon(r)  { return r < 0.4 ? 'bi-shield-check' : r < 0.7 ? 'bi-shield-exclamation' : 'bi-shield-x'; }
+  function getBarClass(r)  { return r < 0.4 ? 'bar-risk-low' : r < 0.7 ? 'bar-risk-med' : 'bar-risk-high'; }
+
+  function renderResults(data, query) {
+    document.getElementById('resultsContainer').style.display = 'block';
+    document.getElementById('resultCount').textContent = data.length;
+    document.getElementById('queryEcho').textContent = `"${query.substring(0,80)}${query.length>80?'...':''}"`;
+    const list = document.getElementById('resultsList');
+    list.innerHTML = '';
+    const maxRel = Math.max(...data.map(d => d.relevance_score));
+
+    data.forEach((trial, idx) => {
+      const relPct = Math.min(100, (trial.relevance_score / maxRel) * 100);
+      const riskPct = trial.sae_risk * 100;
+      const finalPct = Math.min(100, trial.final_score * 600);
+      const maxShap = Math.max(...trial.shap_top_features.map(f => Math.abs(f.value)));
+
+      const card = document.createElement('div');
+      card.className = 'result-card';
+      card.innerHTML = `
+        <div class="d-flex align-items-start gap-3">
+          <div class="rank-badge ${idx < 3 ? 'top' : 'mid'}">${idx+1}</div>
+          <div class="flex-grow-1">
+            <div class="trial-id">${trial.nctid}</div>
+            <div class="trial-title">${trial.title}</div>
+            <div class="score-row">
+              <div class="score-item">
+                <div class="score-label">Relevance Score</div>
+                <div class="score-bar-track"><div class="score-bar-fill bar-relevance" style="width:${relPct}%"></div></div>
+                <div class="score-value">${trial.relevance_score.toFixed(3)}</div>
+              </div>
+              <div class="score-item">
+                <div class="score-label">Failure Risk</div>
+                <div class="score-bar-track"><div class="score-bar-fill ${getBarClass(trial.sae_risk)}" style="width:${riskPct}%"></div></div>
+                <div class="score-value">${(trial.sae_risk*100).toFixed(1)}%</div>
+              </div>
+              <div class="score-item">
+                <div class="score-label">Final Score</div>
+                <div class="score-bar-track"><div class="score-bar-fill bar-final" style="width:${finalPct}%"></div></div>
+                <div class="score-value" style="color:var(--gold)">${trial.final_score.toFixed(4)}</div>
+              </div>
+            </div>
+            <div class="d-flex align-items-center gap-2 flex-wrap">
+              <span class="risk-pill ${getRiskClass(trial.sae_risk)}">
+                <i class="bi ${getRiskIcon(trial.sae_risk)}"></i>${getRiskLabel(trial.sae_risk)}
+              </span>
+              <span style="font-size:11px;color:var(--text-muted);">Rank #${idx+1} of ${data.length}</span>
+            </div>
+            <button class="expand-btn" onclick="toggleShap(this,'shap-${idx}')">
+              <i class="bi bi-bar-chart me-1"></i>Show SHAP Explanation
+            </button>
+            <div class="shap-section" id="shap-${idx}" style="display:none;">
+              <div class="shap-title">Feature Contributions (SHAP Values)</div>
+              ${trial.shap_top_features.map(f => {
+                const pct = Math.min(100,(Math.abs(f.value)/maxShap)*100);
+                const isPos = f.value > 0;
+                return `<div class="shap-feature">
+                  <div class="shap-name">${f.feature.replace(/_/g,' ')}</div>
+                  <div class="shap-bar-track"><div class="${isPos?'shap-bar-pos':'shap-bar-neg'}" style="width:${pct}%"></div></div>
+                  <div class="shap-val" style="color:${isPos?'var(--risk-high)':'var(--accent-blue)'}">
+                    ${f.value>0?'+':''}${f.value.toFixed(3)}
+                  </div>
+                </div>`;
+              }).join('')}
+              <div style="font-size:11px;color:var(--text-muted);margin-top:8px;">
+                <i class="bi bi-info-circle me-1"></i>Positive = increases failure risk · Negative = decreases it
+              </div>
+            </div>
+          </div>
+        </div>`;
+      list.appendChild(card);
+    });
+  }
+
+  function toggleShap(btn, id) {
+    const el = document.getElementById(id);
+    const hidden = el.style.display === 'none';
+    el.style.display = hidden ? 'block' : 'none';
+    btn.innerHTML = hidden
+      ? '<i class="bi bi-x me-1"></i>Hide SHAP Explanation'
+      : '<i class="bi bi-bar-chart me-1"></i>Show SHAP Explanation';
+  }
+
+  function sortResults(key, btn) {
+    document.querySelectorAll('.sort-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    const sorted = [...currentResults].sort((a,b) => key === 'sae_risk' ? a.sae_risk - b.sae_risk : b[key] - a[key]);
+    renderResults(sorted, document.getElementById('summary').value);
+  }
+</script>
+
+</body>
+</html>

@@ -1,0 +1,28 @@
+seed: 42
+data:
+  aact_host: "aact-db.ctti-clinicaltrials.org"
+  aact_port: 5432
+  aact_db: "aact"
+  raw_trials: "data/raw/trials.csv"
+  embeddings: "data/processed/trial_embeddings.npy"
+  faiss_index: "data/processed/trial_index.faiss"
+  t3_train: "data/raw/t3_train.csv"
+  t3_test: "data/raw/t3_test.csv"
+
+retrieval:
+  model: "microsoft/BiomedNLP-PubMedBERT-base-uncased-abstract"
+  top_k: 100
+  nlist: 100
+  nprobe: 10
+  batch_size: 128
+
+reranking:
+  model: "cross-encoder/ms-marco-MiniLM-L-12-v2"
+  top_k: 20
+
+risk:
+  n_estimators: 300
+  max_depth: 6
+  learning_rate: 0.05
+  n_folds: 5
+  model_path: "models/xgb_sae.pkl"
